@@ -1,0 +1,633 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Quốc ngữ → Hán tự</title>
+<style>
+:root{--bg:#faf7f2;--fg:#201c18;--mut:#6f665c;--card:#fff;--bd:#e2d9cc;--ac:#b3261e;--ac2:#fff;--up:#1f5f8b;
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){color-scheme:dark;--bg:#17140f;--fg:#efe8dc;--mut:#a59a8b;--card:#211d17;--bd:#3a332a;--ac:#e8685f;--ac2:#17140f;--up:#7fb8e0}}
+:root[data-theme="dark"]{color-scheme:dark;--bg:#17140f;--fg:#efe8dc;--mut:#a59a8b;--card:#211d17;--bd:#3a332a;--ac:#e8685f;--ac2:#17140f;--up:#7fb8e0}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.6 "Be Vietnam Pro",system-ui,sans-serif}
+main{max-width:920px;margin:0 auto;padding:24px 16px 48px}
+h1{font:700 1.6rem/1.2 Cambria,"Times New Roman","Noto Serif",serif;margin:0 0 4px}
+p.sub{color:var(--mut);margin:0 0 20px}
+.grid{display:grid;grid-template-columns:1fr;gap:14px}
+.grid.side{grid-template-columns:1fr 1fr}
+@media(max-width:700px){.grid.side{grid-template-columns:1fr}}
+.card{background:var(--card);border:1px solid var(--bd);border-radius:12px;padding:12px}
+label{font-size:.8rem;font-weight:600;color:var(--mut);text-transform:uppercase;letter-spacing:.04em}
+textarea{width:100%;min-height:220px;margin-top:6px;border:0;outline:0;resize:vertical;background:transparent;color:var(--fg);font:inherit}
+#out{min-height:220px;margin-top:6px;font-size:1.25rem;line-height:2;word-break:break-word;white-space:pre-wrap}
+.han{font-family:"Noto Serif TC","Noto Serif CJK TC","PMingLiU","Songti TC",serif;font-size:1.45rem;color:var(--ac);cursor:help}
+.up{color:var(--up);font-weight:600;font-size:1rem}
+rt{font-size:.5rem;color:var(--mut);font-family:inherit}
+.amb{border-bottom:1px dotted var(--ac);cursor:pointer}
+.brk{color:var(--mut);font-size:.8rem}
+.cmp{cursor:pointer}
+.cmp:hover{background:rgba(128,128,128,.18)}
+#pop{position:absolute;z-index:20;background:var(--card);border:1px solid var(--bd);border-radius:10px;padding:6px;display:flex;flex-wrap:wrap;gap:4px;max-width:280px;max-height:240px;overflow:auto;box-shadow:0 4px 16px rgba(0,0,0,.25)}
+#pop[hidden]{display:none}
+#pop button{font-family:"Noto Serif TC","Noto Serif CJK TC","PMingLiU","Songti TC",serif;font-size:1.3rem;padding:2px 10px}
+#pop button.cur{background:var(--ac);color:var(--ac2);border-color:var(--ac)}
+#pop .hint{width:100%;font-size:.75rem;color:var(--mut)}
+.bar{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin:14px 0}
+button{font:inherit;font-size:.9rem;padding:7px 14px;border-radius:8px;border:1px solid var(--bd);background:var(--card);color:var(--fg);cursor:pointer}
+button.p{background:var(--ac);color:var(--ac2);border-color:var(--ac)}
+.stat{color:var(--mut);font-size:.85rem;margin-left:auto}
+details{margin-top:18px}
+summary{cursor:pointer;font-weight:600}
+details textarea{min-height:130px;border:1px solid var(--bd);border-radius:8px;padding:8px;font:.85rem/1.5 ui-monospace,monospace}
+.note{color:var(--mut);font-size:.85rem;margin-top:8px}
+</style>
+</head>
+<body>
+<main>
+<h1>Quốc ngữ → Hán tự</h1>
+<p class="sub">Từ Hán Việt được đổi sang chữ Hán; từ thuần Việt và các từ không có trong từ điển được IN HOA.</p>
+
+<div class="grid" id="grid">
+  <div class="card"><label for="in">Văn bản quốc ngữ</label>
+  <textarea id="in" placeholder="Nhập văn bản…">Việt Nam là một quốc gia độc lập, nhân dân yêu hòa bình và tự do.</textarea></div>
+  <div class="card"><label>Kết quả</label><div id="out"></div></div>
+</div>
+
+<div class="bar">
+  <button class="p" id="copy">Sao chép kết quả</button>
+  <label style="text-transform:none;letter-spacing:0"><input type="checkbox" id="ruby"> Hiện phiên âm trên chữ Hán</label>
+  <label style="text-transform:none;letter-spacing:0"><input type="checkbox" id="brk"> Hiện chữ đồng âm trong ngoặc</label>
+  <label style="text-transform:none;letter-spacing:0"><input type="checkbox" id="iy" checked> Chấp nhận i/y lẫn lộn (lí/lý, mĩ/mỹ…)</label>
+  <label style="text-transform:none;letter-spacing:0"><input type="checkbox" id="side"> Chia đôi trái/phải</label>
+  <span class="stat" id="stat"></span>
+</div>
+
+<details>
+  <summary>Từ điển bổ sung của bạn</summary>
+  <p class="note">Mỗi dòng một mục, dạng <code>quốc ngữ = 漢字</code> (có thể nhiều âm tiết, ví dụ <code>thành phố = 城鋪</code>). Mục của bạn ghi đè từ điển có sẵn.</p>
+  <textarea id="custom" placeholder="thế giới = 世界"></textarea>
+  <div class="bar"><button id="save">Lưu &amp; áp dụng</button><span class="note" id="msg"></span></div>
+  <div class="bar">
+    <label style="text-transform:none;letter-spacing:0">Nạp TSV (<code>chinese-hanviet-cognates.tsv</code>): <input type="file" id="tsv" accept=".tsv,.txt"></label>
+    <label style="text-transform:none;letter-spacing:0"><input type="checkbox" id="only2" checked> Chỉ dùng cụm ≥ 2 âm tiết</label>
+    <label style="text-transform:none;letter-spacing:0">Nạp <code>phienam.txt</code> (âm đơn): <input type="file" id="ph" accept=".txt"></label>
+    <span class="note" id="tsvmsg"></span>
+  </div>
+  <div class="bar">
+    <label style="text-transform:none;letter-spacing:0">Nạp <code>opensubs-freq.txt</code> (tần suất tiếng Việt): <input type="file" id="fq" accept=".txt"></label>
+    <label style="text-transform:none;letter-spacing:0">Top <input type="number" id="topn" value="800" min="0" max="5000" style="width:5.5em"> âm phổ biến nhất coi là thuần Việt, trừ âm có ≥ <input type="number" id="hvm" value="8" min="1" max="99" style="width:4em"> cụm Hán Việt</label>
+    <span class="note" id="fqmsg"></span>
+  </div>
+  <div class="bar">
+    <label style="text-transform:none;letter-spacing:0">Nạp <code>kTraditionalVariant.json</code> (giản → phồn, từ Unihan): <input type="file" id="uv" accept=".json"></label>
+    <span class="note" id="uvmsg"></span>
+  </div>
+  <label for="stop">Từ thuần Việt không đổi khi đứng riêng (âm đơn, cách nhau bằng dấu cách)</label>
+  <textarea id="stop" style="min-height:90px">là và của có không một những các được trong cho với này đó để khi như nhưng thì mà cũng đã sẽ đang rất nhiều người tôi bạn anh chị em ông bà cô cậu mình họ chúng ta nó ai gì nào sao đâu bao mấy hai ba bốn năm sáu bảy tám chín mười ra vào lên xuống đi đến về ở hơn lại còn vẫn bị bởi vì nên nếu hay rồi xong chỉ chưa đều luôn từ tới cùng theo sau trước giữa ngoài trên dưới đây đấy kia thế vậy</textarea>
+  <label for="blk">Quy tắc tách cụm (mỗi dòng: <code>cụm &gt; từ theo sau</code>; để <code>*</code> = mọi ngữ cảnh; xoá dòng để khôi phục)</label>
+  <textarea id="blk" style="min-height:70px" placeholder="đại từ &gt; điển"></textarea>
+</details>
+<p class="note">Lưu ý: từ điển có sẵn chỉ là bộ khởi đầu (vài trăm mục thông dụng). Nhiều âm Hán Việt đồng âm khác chữ (ví dụ “công”: 公, 工, 功), nên app ưu tiên cụm từ dài nhất và dùng chữ phổ biến nhất cho âm đơn. Hãy bổ sung từ điển để chính xác hơn.</p>
+</main>
+<div id="pop" hidden></div>
+
+<script>
+const BASE=`việt nam=越南
+trung quốc=中國
+hán việt=漢越
+quốc ngữ=國語
+văn bản=文本
+hòa bình=和平
+độc lập=獨立
+tự do=自由
+hạnh phúc=幸福
+giáo dục=教育
+học sinh=學生
+giáo viên=教員
+đại học=大學
+tiểu học=小學
+trung học=中學
+quốc gia=國家
+nhân dân=人民
+thế giới=世界
+thời gian=時間
+không gian=空間
+văn hóa=文化
+lịch sử=歷史
+kinh tế=經濟
+chính trị=政治
+xã hội=社會
+khoa học=科學
+kỹ thuật=技術
+công nghệ=工藝
+điện thoại=電話
+điện tử=電子
+gia đình=家庭
+thiên nhiên=天然
+tự nhiên=自然
+sinh hoạt=生活
+bệnh viện=病院
+thể dục=體育
+hoàn toàn=完全
+thành công=成功
+thất bại=失敗
+phát triển=發展
+quản lý=管理
+công ty=公司
+cộng hòa=共和
+chủ nghĩa=主義
+hoàng đế=皇帝
+nam nữ=男女
+sinh tử=生死
+phụ mẫu=父母
+nhân loại=人類
+nhân sinh=人生
+nhân tâm=人心
+thiên hạ=天下
+thiên địa=天地
+sơn hà=山河
+giang sơn=江山
+tổ quốc=祖國
+tổ tiên=祖先
+tư tưởng=思想
+đạo đức=道德
+nhân nghĩa=仁義
+lễ nghĩa=禮義
+hiếu thảo=孝
+tâm hồn=心魂
+tinh thần=精神
+vật chất=物質
+sinh vật=生物
+động vật=動物
+thực vật=植物
+nhật nguyệt=日月
+phong cảnh=風景
+phong thủy=風水
+thủy điện=水電
+hỏa tiễn=火箭
+ngũ hành=五行
+âm dương=陰陽
+thái dương=太陽
+thái bình=太平
+đại nam=大南
+đại việt=大越
+đại đồng=大同
+vạn vật=萬物
+vạn tuế=萬歲
+nhất định=一定
+nhất thống=一統
+thống nhất=統一
+đoàn kết=團結
+chiến tranh=戰爭
+chiến đấu=戰鬪
+quân đội=軍隊
+quân nhân=軍人
+chính phủ=政府
+pháp luật=法律
+hiến pháp=憲法
+quyền lợi=權利
+nghĩa vụ=義務
+tự nhiên=自然
+học tập=學習
+nghiên cứu=研究
+giáo sư=教師
+tiến sĩ=進士
+thi cử=科舉
+văn chương=文章
+văn học=文學
+thi ca=詩歌
+âm nhạc=音樂
+mỹ thuật=美術
+nghệ thuật=藝術
+nhân=人
+dân=民
+quốc=國
+gia=家
+thiên=天
+địa=地
+đại=大
+tiểu=小
+trung=中
+văn=文
+học=學
+sinh=生
+sư=師
+giáo=教
+dục=育
+thư=書
+thủy=水
+hỏa=火
+mộc=木
+kim=金
+thổ=土
+sơn=山
+hà=河
+giang=江
+hải=海
+nhật=日
+nguyệt=月
+tinh=星
+phong=風
+vân=雲
+vũ=雨
+xuân=春
+hạ=夏
+thu=秋
+đông=東
+nam=南
+bắc=北
+tây=西
+nhất=一
+nhị=二
+tam=三
+tứ=四
+ngũ=五
+lục=六
+thất=七
+bát=八
+cửu=九
+thập=十
+bách=百
+vạn=萬
+tâm=心
+tình=情
+ái=愛
+hiếu=孝
+nghĩa=義
+lễ=禮
+trí=智
+tín=信
+đức=德
+đạo=道
+thiện=善
+ác=惡
+mỹ=美
+chân=真
+hòa=和
+bình=平
+an=安
+phúc=福
+lộc=祿
+thọ=壽
+phụ=父
+mẫu=母
+huynh=兄
+đệ=弟
+tử=子
+nữ=女
+thân=身
+thể=體
+bệnh=病
+y=醫
+dược=藥
+hán=漢
+việt=越
+hoàng=皇
+đế=帝
+vương=王
+quân=君
+thần=神
+tiên=仙
+phật=佛
+thiền=禪
+chủ=主
+thành=城
+môn=門
+quan=官
+tướng=將
+binh=兵
+chiến=戰
+pháp=法
+luật=律
+lực=力
+hiệp=俠
+kiếm=劍
+đao=刀
+mã=馬
+long=龍
+phụng=鳳
+hổ=虎
+ngư=魚
+điểu=鳥
+hoa=花
+thảo=草
+lâm=林
+thạch=石
+ngọc=玉
+bảo=寶
+thiếu=少
+lão=老
+trường=長
+cao=高
+thượng=上
+hạ=下
+tả=左
+hữu=右
+nội=內
+ngoại=外
+tiền=前
+hậu=後
+sinh=生
+tử=子
+vô=無
+hữu=有
+bất=不
+thị=是
+khả=可
+năng=能
+cổ=古
+kim=今
+tân=新
+cựu=舊
+quang=光
+minh=明
+ám=暗
+nhật=日
+tài=才
+nhân=人
+học=學
+tự=自
+`;
+const T1={"ỳ":"ù","ý":"ú","ỷ":"ủ","ỹ":"ũ","ỵ":"ụ"},T2={"à":"ò","á":"ó","ả":"ỏ","ã":"õ","ạ":"ọ"},T3={"è":"ò","é":"ó","ẻ":"ỏ","ẽ":"õ","ẹ":"ọ"};
+/* đưa dấu thanh kiểu cũ (hoà, thuỷ, khoẻ) về kiểu mới (hòa, thủy, khỏe) để so khớp */
+function fixSyl(w){
+  const n=w.length; if(n<2) return w;
+  const a=w[n-2], b=w[n-1];
+  if(a==="u"&&T1[b]&&w[n-3]!=="q") return w.slice(0,n-2)+T1[b]+"y";
+  if(a==="o"&&T2[b]) return w.slice(0,n-2)+T2[b]+"a";
+  if(a==="o"&&T3[b]) return w.slice(0,n-2)+T3[b]+"e";
+  return w;
+}
+const norm=s=>s.normalize("NFC").toLowerCase().replace(/\s+/g," ").trim().split(" ").map(fixSyl).join(" ");
+function parse(txt,map){
+  for(const line of txt.split(/\r?\n/)){
+    const i=line.indexOf("="); if(i<1) continue;
+    const k=norm(line.slice(0,i)), v=line.slice(i+1).trim();
+    if(k&&v) map.set(k,v);
+  }
+}
+let DICT=new Map(), MAXN=1, EXTRA=[], PH=[], S2T={}, CF={}, PREF={}, CAND=new Map(), FQ={}, UV={}, AUTO=new Set(), FQC={n:800,m:8};
+const STOP=new Set(), BLK=new Set();
+const sv=(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v));return true}catch(e){return false}};
+const ld=(k,d)=>{try{const s=localStorage.getItem(k);return s?JSON.parse(s):d}catch(e){return d}};
+function build(custom){
+  DICT=new Map(); CAND=new Map(); buildAuto(); parse(BASE,DICT);
+  const only2=document.getElementById("only2").checked;
+  for(const [k,v] of EXTRA){ if(only2&&!k.includes(" ")) continue; DICT.set(k,v); }
+  if(PH.length){
+    const tmp=new Map();
+    PH.forEach(([c,s],i)=>{const t=toTrad(c),k=norm(s);let a=tmp.get(k);if(!a){a=[];tmp.set(k,a);}if(!a.some(x=>x[0]===t))a.push([t,i]);});
+    for(const [k,a] of tmp){a.sort((x,y)=>(CF[y[0]]||0)-(CF[x[0]]||0)||x[1]-y[1]);CAND.set(k,a.map(x=>x[0]));}
+    for(const [k,a] of CAND){ if(k.includes(" ")||STOP.has(k)||AUTO.has(k)||DICT.has(k)) continue; DICT.set(k,a[0]); }
+  }
+  parse(custom||"",DICT);
+  for(const [k,v] of DICT){ if(k.includes(" ")) continue; const a=CAND.get(k); if(a&&!a.includes(v)) a.unshift(v); }
+  MAXN=1; for(const k of DICT.keys()) MAXN=Math.max(MAXN,k.split(" ").length);
+}
+function convert(text){
+  const tk=text.normalize("NFC").match(/\p{L}+|[^\p{L}]+/gu)||[];
+  const segs=[]; let i=0;
+  const isWord=t=>/^\p{L}/u.test(t);
+  while(i<tk.length){
+    const t=tk[i];
+    if(!isWord(t)){segs.push({t:"sep",out:t});i++;continue;}
+    let hit=null;
+    for(let n=MAXN;n>=1&&!hit;n--){
+      const ws=[],raw=[]; let j=i,ok=true;
+      for(let c=0;c<n;c++){
+        if(c>0){ if(!/^[ \u00a0]+$/.test(tk[j]||"")){ok=false;break;} raw.push(tk[j]); j++; }
+        if(j>=tk.length||!isWord(tk[j])){ok=false;break;}
+        ws.push(tk[j]); raw.push(tk[j]); j++;
+      }
+      if(!ok) continue;
+      let key=norm(ws.join(" ")); let v=DICT.get(key); if(!v&&$("iy").checked){for(const a of altKeys(key)){if(DICT.has(a)){key=a;v=DICT.get(a);break;}}} if(v&&n===1&&PREF[key]) v=PREF[key]==="@latin"?null:PREF[key];
+      const nx=(/^[ \u00a0]+$/.test(tk[j]||"")&&j+1<tk.length&&isWord(tk[j+1]))?norm(tk[j+1]):"";
+      if(v&&n>1&&(BLK.has(key+">"+nx)||BLK.has(key+">*"))) v=null;
+      if(v) hit={v,src:ws.join(" "),words:ws,next:j,key,nx};
+    }
+    if(hit){segs.push({t:"han",out:hit.v,src:hit.src,words:hit.words,key:hit.key,nx:hit.nx});i=hit.next;}
+    else{const kk=norm(t); let rk=PREF[kk]==="@latin"?kk:null;
+      if(!rk&&$("iy").checked) for(const a of altKeys(kk)) if(PREF[a]==="@latin"){rk=a;break;}
+      segs.push({t:"up",out:t.toLocaleUpperCase("vi"),src:t,rev:rk});i++;}
+  }
+  return segs;
+}
+const $=id=>document.getElementById(id);
+function esc(s){return s.replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));}
+let last=[];
+function render(){
+  last=convert($("in").value);
+  const ruby=$("ruby").checked; let h=0,u=0,html="";
+  for(const s of last){
+    if(s.t==="han"){
+      h++;
+      const chars=[...s.out]; const sy=s.words.length===1?(s.key||norm(s.src)):""; const amb=sy&&(CAND.get(sy)||[]).length>0; const oth=amb?CAND.get(sy).filter(c=>c!==s.out).slice(0,4):[]; const more=(oth.length&&$("brk").checked)?`<small class="brk">(${esc(oth.join(""))})</small>`:""; const at=amb?` class="han amb" data-syl="${esc(sy)}"`:(s.words.length>1&&s.key?` class="han cmp" data-key="${esc(s.key)}" data-nx="${esc(s.nx||"")}"`:` class="han"`);
+      if(ruby&&chars.length===s.words.length){
+        html+=`<span${at} title="${esc(s.src)}">`+chars.map((c,k)=>`<ruby>${esc(c)}<rt>${esc(s.words[k])}</rt></ruby>`).join("")+`</span>`+more;
+      } else html+=`<span${at} title="${esc(s.src)}">${esc(s.out)}</span>`+more;
+    } else if(s.t==="up"){u++;html+=s.rev?`<span class="up amb" data-w="${esc(s.src||"")}" data-syl="${esc(s.rev)}" title="Bấm để chọn lại chữ Hán">${esc(s.out)}</span>`:`<span class="up" data-w="${esc(s.src||"")}">${esc(s.out)}</span>`;}
+    else html+=esc(s.out);
+  }
+  $("out").innerHTML=html;
+  $("stat").textContent=`${h} từ/cụm → Hán tự · ${u} từ in hoa`;
+}
+function load(){try{return localStorage.getItem("qn-han-custom")||""}catch(e){return ""}}
+function loadExtraStored(){EXTRA=ld("qn-han-tsv",[]);S2T=ld("qn-han-s2t",{});CF=ld("qn-han-cf",{});PH=ld("qn-han-ph",[]);PREF=ld("qn-han-pref",{});FQ=ld("qn-han-fq",{});UV=ld("qn-han-uv",{});FQC=ld("qn-han-fqc",FQC);$("topn").value=FQC.n;$("hvm").value=FQC.m;try{const st=localStorage.getItem("qn-han-stop");if(st!==null)$("stop").value=st;const bl=localStorage.getItem("qn-han-blk");if(bl!==null)$("blk").value=bl;}catch(e){}loadStop();loadBlk();}
+$("custom").value=load(); loadExtraStored(); build($("custom").value);
+if(EXTRA.length)$("tsvmsg").textContent=`Đang dùng ${EXTRA.length} mục từ TSV đã nạp trước đó.`;
+$("in").addEventListener("input",render);
+$("ruby").addEventListener("change",render);
+$("brk").addEventListener("change",render);
+$("save").onclick=()=>{
+  build($("custom").value);
+  let m="Đã áp dụng.";
+  try{localStorage.setItem("qn-han-custom",$("custom").value)}catch(e){m="Đã áp dụng (không lưu được cho lần sau)."}
+  $("msg").textContent=m; render();
+};
+$("only2").addEventListener("change",()=>{build($("custom").value);render();});
+$("tsv").addEventListener("change",async e=>{
+  const f=e.target.files[0]; if(!f) return;
+  const rows=(await f.text()).split(/\r?\n/).filter(Boolean).map(l=>l.split("\t"));
+  const h=rows.shift().map(x=>x.trim().toLowerCase());
+  const iH=h.indexOf("hanviet"),iT=h.indexOf("traditional"),iF=h.indexOf("frequency"),iW=h.indexOf("word");
+  if(iH<0||iT<0){$("tsvmsg").textContent="Không tìm thấy cột hanviet / traditional trong tệp.";return;}
+  const best=new Map(); S2T={}; CF={};
+  for(const r of rows){
+    const v=(r[iT]||"").trim(), fr=parseFloat(r[iF])||0; if(!v) continue;
+    const wsim=[...(r[iW]||"")], wtr=[...v];
+    for(let i=0;i<wtr.length;i++){ CF[wtr[i]]=(CF[wtr[i]]||0)+fr; if(wsim.length===wtr.length&&wsim[i]!==wtr[i]&&!S2T[wsim[i]]) S2T[wsim[i]]=wtr[i]; }
+    for(const k0 of (r[iH]||"").split("/")){
+      const k=norm(k0); if(!k) continue;
+      const o=best.get(k); if(!o||fr>o[2]) best.set(k,[k,v,fr]);
+    }
+  }
+  EXTRA=[...best.values()];
+  let m=`Đã nạp ${EXTRA.length} mục (mỗi âm giữ chữ có tần suất cao nhất).`;
+  if(!(sv("qn-han-tsv",EXTRA)&&sv("qn-han-s2t",S2T)&&sv("qn-han-cf",CF)))m+=" Không lưu được cho lần sau.";
+  $("tsvmsg").textContent=m; build($("custom").value); render();
+});
+$("ph").addEventListener("change",async e=>{
+  const f=e.target.files[0]; if(!f) return;
+  const out=[];
+  for(const line of (await f.text()).split(/\r?\n/)){
+    const i=line.lastIndexOf("="); if(i<1) continue;
+    const c=line.slice(0,i).trim();
+    for(const s of line.slice(i+1).split(/[,\/;]/)){ const t=s.trim(); if(c&&t) out.push([c,t]); }
+  }
+  if(!out.length){$("tsvmsg").textContent="Không đọc được tệp (cần dạng 漢=âm).";return;}
+  PH=out; let m=`Đã nạp ${PH.length} chữ đơn.`;
+  if(!sv("qn-han-ph",PH)) m+=" Không lưu được cho lần sau.";
+  if(!Object.keys(S2T).length) m+=" Hãy nạp thêm TSV để đổi giản thể sang phồn thể.";
+  $("tsvmsg").textContent=m; build($("custom").value); render();
+});
+/* âm đơn phổ biến khi đứng riêng trong tiếng Việt (top N) mà ít xuất hiện trong cụm Hán Việt (< M) → coi là thuần Việt */
+function buildAuto(){
+  AUTO=new Set(); const ks=Object.keys(FQ); if(!ks.length||!FQC.n) return;
+  const hvc={}; for(const [k] of EXTRA) for(const s of k.split(" ")) hvc[s]=(hvc[s]||0)+1;
+  ks.sort((a,b)=>FQ[b]-FQ[a]);
+  for(const k of ks.slice(0,FQC.n)) if((hvc[k]||0)<FQC.m) AUTO.add(k);
+}
+$("fq").addEventListener("change",async e=>{
+  const f=e.target.files[0]; if(!f) return;
+  const fq={};
+  for(const line of (await f.text()).split(/\r?\n/)){
+    const m=line.match(/^(.+?)[\t ]+(\d+)\s*$/); if(!m) continue;
+    const w=m[1].trim(); if(!/^\p{L}+$/u.test(w)||w.length>7) continue;
+    const k=norm(w); fq[k]=(fq[k]||0)+(+m[2]);
+  }
+  FQ={}; for(const k in fq) if(fq[k]>=30) FQ[k]=fq[k];
+  let msg=`Đã lọc còn ${Object.keys(FQ).length} âm đơn (chỉ lưu bản gọn).`;
+  if(!sv("qn-han-fq",FQ)) msg+=" Không lưu được cho lần sau.";
+  build($("custom").value); render();
+  $("fqmsg").textContent=msg+` Đang coi ${AUTO.size} âm là thuần Việt.`;
+});
+const fqc=()=>{
+  FQC={n:Math.max(0,+$("topn").value||0),m:Math.max(1,+$("hvm").value||8)}; sv("qn-han-fqc",FQC);
+  build($("custom").value); render(); $("fqmsg").textContent=`Đang coi ${AUTO.size} âm là thuần Việt.`;
+};
+$("topn").addEventListener("change",fqc); $("hvm").addEventListener("change",fqc);
+/* giản → phồn: ưu tiên Unihan; nếu chữ đã là phồn hợp lệ thì giữ nguyên; nếu nhiều dạng phồn thì theo TSV, rồi theo tần suất */
+function toTrad(c){
+  const v=UV[c];
+  if(v){
+    const a=[...v];
+    if(a.includes(c)) return c;
+    if(S2T[c]&&a.includes(S2T[c])) return S2T[c];
+    let b=a[0]; for(const x of a) if((CF[x]||0)>(CF[b]||0)) b=x;
+    return b;
+  }
+  return S2T[c]||c;
+}
+$("uv").addEventListener("change",async e=>{
+  const f=e.target.files[0]; if(!f) return;
+  let j; try{j=JSON.parse(await f.text())}catch(err){$("uvmsg").textContent="Không đọc được tệp JSON.";return;}
+  const uc=s=>/^U\+[0-9a-f]+/i.test(s)?String.fromCodePoint(parseInt(s.slice(2),16)):s;
+  const uv={}; let n=0;
+  for(const k in j){
+    const arr=Array.isArray(j[k])?j[k]:[j[k]];
+    const vs=arr.map(x=>uc(String(x))).filter(Boolean);
+    if(vs.length){uv[uc(k)]=vs.join(""); n++;}
+  }
+  UV=uv; let m=`Đã nạp ${n} chữ có dạng phồn thể.`;
+  if(!sv("qn-han-uv",UV)) m+=" Không lưu được cho lần sau.";
+  build($("custom").value); render(); $("uvmsg").textContent=m;
+});
+/* i/y lẫn lộn: chỉ thử biến thể khi KHÔNG tìm thấy, không sửa dữ liệu từ điển */
+const IYS={i:"y",í:"ý",ì:"ỳ",ỉ:"ỷ",ĩ:"ỹ",ị:"ỵ",y:"i",ý:"í",ỳ:"ì",ỷ:"ỉ",ỹ:"ĩ",ỵ:"ị"};
+const VOW=/[aăâeêsioôơuưyáàảãạắằẳẵặấầẩẫậéèẻẽẹếềểễệíìỉĩịóòỏõọốồổỗộớờởỡợúùủũụứừửữựýỳỷỹỵ]/;
+function swapIY(s){
+  const n=s.length, r=IYS[s[n-1]]; if(!r) return null;
+  if(n===1||!VOW.test(s[n-2])||(s[n-2]==="u"&&s[n-3]==="q")) return s.slice(0,n-1)+r;
+  return null;
+}
+function altKeys(key){
+  let res=[[]];
+  for(const p of key.split(" ")){ const a=swapIY(p), opts=a?[p,a]:[p]; res=res.flatMap(r=>opts.map(o=>[...r,o])); }
+  return res.map(r=>r.join(" ")).filter(k=>k!==key);
+}
+$("iy").addEventListener("change",render);
+/* bố cục trên/dưới (mặc định) ↔ trái/phải */
+function setSide(on){$("grid").classList.toggle("side",on);}
+try{$("side").checked=localStorage.getItem("qn-han-side")==="1";}catch(e){}
+setSide($("side").checked);
+$("side").addEventListener("change",()=>{setSide($("side").checked);try{localStorage.setItem("qn-han-side",$("side").checked?"1":"0")}catch(e){}});
+/* nhấp đúp vào một từ ở kết quả → thêm vào từ điển bổ sung */
+function addCustom(k,v){
+  k=norm(k); v=v.trim(); if(!k||!v) return;
+  const lines=$("custom").value.split(/\r?\n/).filter(l=>{const i=l.indexOf("=");return !(i>0&&norm(l.slice(0,i))===k);});
+  lines.push(`${k} = ${v}`);
+  $("custom").value=lines.filter(Boolean).join("\n");
+  try{localStorage.setItem("qn-han-custom",$("custom").value)}catch(e){}
+  delete PREF[k]; sv("qn-han-pref",PREF);
+  build($("custom").value); render();
+  $("msg").textContent=`Đã thêm: ${k} = ${v}`;
+}
+$("out").addEventListener("dblclick",e=>{
+  const el=e.target.closest(".up,.han"); if(!el) return;
+  const w=(el.dataset.w||el.title||"").trim(); if(!w) return;
+  getSelection().removeAllRanges();
+  pop.innerHTML=`<div class="hint">Thêm vào từ điển bổ sung (có thể sửa vế trái thành cụm nhiều âm tiết):</div><div class="hint"><input id="dk" value="${esc(w.toLowerCase())}" style="width:9em"> = <input id="dv" placeholder="chữ Hán" style="width:7em"></div><button id="dadd" class="p" style="font:.85rem system-ui">Thêm</button>`;
+  const r=el.getBoundingClientRect();
+  pop.style.left=Math.max(8,r.left+scrollX)+"px"; pop.style.top=(r.bottom+scrollY+6)+"px";
+  pop.hidden=false; $("dv").focus();
+});
+function loadStop(){STOP.clear(); for(const w of $("stop").value.split(/[\s,]+/)) if(w) STOP.add(norm(w));}
+function loadBlk(){
+  BLK.clear();
+  for(const l of $("blk").value.split(/\r?\n/)){
+    const i=l.lastIndexOf(">"); if(i<1) continue;
+    const c=l.slice(i+1).trim();
+    BLK.add(norm(l.slice(0,i))+">"+(c==="*"?"*":norm(c)));
+  }
+}
+function addBlock(s){
+  const i=s.lastIndexOf(">"), line=`${s.slice(0,i)} > ${s.slice(i+1)}`.trimEnd();
+  const cur=$("blk").value.split(/\r?\n/).filter(Boolean);
+  if(!cur.includes(line)) cur.push(line);
+  $("blk").value=cur.join("\n");
+  try{localStorage.setItem("qn-han-blk",$("blk").value)}catch(e){}
+  loadBlk(); render();
+}
+$("stop").addEventListener("change",()=>{loadStop();try{localStorage.setItem("qn-han-stop",$("stop").value)}catch(e){}build($("custom").value);render();});
+$("blk").addEventListener("change",()=>{loadBlk();try{localStorage.setItem("qn-han-blk",$("blk").value)}catch(e){}render();});
+/* bấm vào cụm Hán Việt → tách thành âm riêng (theo ngữ cảnh hoặc mọi nơi) */
+$("out").addEventListener("click",e=>{
+  const el=e.target.closest(".cmp"); if(!el) return;
+  const k=el.dataset.key, nx=el.dataset.nx||"", st="font:.85rem system-ui;width:100%";
+  pop.innerHTML=`<div class="hint">Cụm “${esc(k)}” — tách thành các âm riêng lẻ?</div><button data-sp="${esc(k+">"+nx)}" style="${st}">✂ Chỉ khi theo sau là “${esc(nx||"hết câu/dấu câu")}”</button><button data-sp="${esc(k+">*")}" style="${st}">✂ Ở mọi ngữ cảnh</button>`;
+  const r=el.getBoundingClientRect();
+  pop.style.left=Math.max(8,r.left+scrollX)+"px"; pop.style.top=(r.bottom+scrollY+6)+"px";
+  pop.hidden=false;
+});
+document.addEventListener("keydown",e=>{ if(e.key==="Escape") pop.hidden=true; });
+const pop=$("pop");
+$("out").addEventListener("click",e=>{
+  const el=e.target.closest(".amb"); if(!el) return;
+  const syl=el.dataset.syl, list=CAND.get(syl)||[], cur=PREF[syl]||DICT.get(syl);
+  pop.innerHTML=`<div class="hint">Âm “${esc(syl)}” — chọn chữ Hán:</div>`+list.map(c=>`<button data-c="${esc(c)}"${c===cur?' class="cur"':""}>${esc(c)}</button>`).join("")+`<div class="hint"><input id="pin" maxlength="2" placeholder="chữ khác" style="width:5.5em"> <button data-c="__own" style="font:.85rem system-ui">Dùng</button></div><button data-c="@latin" style="width:100%;font:.85rem system-ui"${cur==="@latin"?' class="cur"':""}>↩ Giữ nguyên chữ quốc ngữ</button>`;
+  const r=el.getBoundingClientRect();
+  pop.style.left=Math.max(8,r.left+scrollX)+"px"; pop.style.top=(r.bottom+scrollY+6)+"px";
+  pop.dataset.syl=syl; pop.hidden=false;
+});
+pop.addEventListener("click",e=>{
+  const b=e.target.closest("button[data-c]"); if(!b) return;
+  let c=b.dataset.c; if(c==="__own"){c=$("pin").value.trim(); if(!c) return;}
+  PREF[pop.dataset.syl]=c; sv("qn-han-pref",PREF); pop.hidden=true; render();
+});
+document.addEventListener("click",e=>{ if(!e.target.closest("#pop")&&!e.target.closest(".amb")&&!e.target.closest(".cmp")) pop.hidden=true; });
+const doAdd=()=>{addCustom($("dk").value,$("dv").value);pop.hidden=true;};
+pop.addEventListener("click",e=>{if(e.target.id==="dadd")doAdd();});
+pop.addEventListener("click",e=>{const b=e.target.closest("button[data-sp]"); if(b){addBlock(b.dataset.sp); pop.hidden=true;}});
+pop.addEventListener("keydown",e=>{if(e.key==="Enter"&&(e.target.id==="dv"||e.target.id==="dk"))doAdd();});
+$("copy").onclick=async()=>{
+  const t=last.map(s=>s.out).join("");
+  try{await navigator.clipboard.writeText(t);$("copy").textContent="Đã sao chép ✓"}
+  catch(e){const r=document.createRange();r.selectNodeContents($("out"));const sel=getSelection();sel.removeAllRanges();sel.addRange(r);$("copy").textContent="Đã chọn, hãy nhấn Ctrl/⌘+C"}
+  setTimeout(()=>$("copy").textContent="Sao chép kết quả",1800);
+};
+render();
+</script>
+</body>
+</html>
